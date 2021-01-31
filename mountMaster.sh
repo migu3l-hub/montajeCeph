@@ -1,5 +1,6 @@
 #!/bin/bash
 # EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
+# CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
 
 
 
@@ -7,8 +8,6 @@ function validarMontaje() {
   MONTADO=0
   COUNTER=0
   NODE=0
-  # wait till next loop
-  SECONDS=15
 
   #stop testing after N times
   TRIES=30
@@ -20,8 +19,8 @@ function validarMontaje() {
   until [  $COUNTER -eq "$TRIES" ]
     do
         let COUNTER=COUNTER+1
-        is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK)
-        lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l)
+        is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK) 2>/dev/null
+        lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
         if [ $is_OK -eq 1 ] || [ $lines -lt 19 ]; then
 	          mount -a
 	          if [ $? -eq 0 ]; then
@@ -49,5 +48,5 @@ if [ $MONTADO -eq 1 ]; then
           echo "paso por el else aun no montado"
           for i in $(docker service ls -qf name=ceph_mon) ; do docker service update $i ; done
           COUNTER=0
-          validarMontaje # -bailing, had to many tries
+          validarMontaje
 fi

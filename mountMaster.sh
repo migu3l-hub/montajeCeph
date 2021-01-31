@@ -35,7 +35,7 @@ function validarMontaje() {
                 MONTADO=0
             fi
 	      else
-	        sleep $SECONDS
+	        sleep 15
         fi
   done
 }

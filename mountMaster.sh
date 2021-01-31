@@ -1,16 +1,17 @@
 #!/bin/bash
 # EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
 
-MONTADO=0
-COUNTER=0
 
-# wait till next loop
-SECONDS=15
-
-#stop testing after N times
-TRIES=30
 
 function validarMontaje() {
+  MONTADO=0
+  COUNTER=0
+  NODE=0
+  # wait till next loop
+  SECONDS=15
+
+  #stop testing after N times
+  TRIES=30
   while [ $NODE -ge 3 ]; do
         NODE=$(docker node ls | grep -c Ready)
         echo "En espera de los demas nodos.."

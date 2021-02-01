@@ -11,7 +11,7 @@ function validarMontaje() {
 
   #stop testing after N times
   TRIES=30
-  until [ $NODE -ge 3 ]; do
+  until [ $NODE -ge 2 ]; do
         NODE=$(docker node ls | grep -c Ready)
         echo "En espera de los demas nodos.."
         sleep 15

@@ -8,13 +8,18 @@ function validarMontaje() {
   MONTADO=0
   COUNTER=0
   NODE=0
-
+  MON=""
   #stop testing after N times
   TRIES=30
   until [ $NODE -ge 2 ]; do
-        NODE=$(docker node ls | grep -c Ready)
-        echo "En espera de los demas nodos.."
-        sleep 15
+      NODE=$(docker node ls | grep -c Ready)
+      echo "En espera de los demas nodos.."
+      sleep 15
+  done
+  until [ $MON != "" ]; do
+      MON=$(docker ps -qf name=ceph_mon)
+      echo "En espera del mon"
+      sleep 10
   done
   until [  $COUNTER -eq "$TRIES" ]
     do
@@ -22,7 +27,7 @@ function validarMontaje() {
         is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK) 2>/dev/null
         lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
         mgr=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
-        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 1 ]; then
+        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 1 ] && [ $lines -ne 0 ]; then
 	          mount -a
 	          if [ $? -eq 0 ]; then
 	              MONTADO=1

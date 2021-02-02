@@ -1,7 +1,7 @@
 #!/bin/bash
 # EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
 # CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
-
+# Poner un ultimo if que pregunte si el mgr esta activo 3 veces por que inicia activo y luego se quita
 
 
 function validarMontaje() {
@@ -21,7 +21,8 @@ function validarMontaje() {
         let COUNTER=COUNTER+1
         is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK) 2>/dev/null
         lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
-        if [ $is_OK -eq 1 ] || [ $lines -lt 19 ]; then
+        mgr=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
+        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 1 ]; then
 	          mount -a
 	          if [ $? -eq 0 ]; then
 	              MONTADO=1

@@ -1,7 +1,7 @@
 #!/bin/bash
-# EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
-# CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
-# Poner un ultimo if que pregunte si el mgr esta activo 3 veces por que inicia activo y luego se quita
+#EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
+#CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
+#Poner un ultimo if que pregunte si el mgr esta activo 3 veces por que inicia activo y luego se quita
 
 
 function validarMontaje() {
@@ -10,13 +10,13 @@ function validarMontaje() {
   NODE=0
   MON=""
   #stop testing after N times
-  TRIES=30
+  TRIES=20
   until [ $NODE -ge 2 ]; do
       NODE=$(docker node ls | grep -c Ready)
       echo "En espera de los demas nodos.."
       sleep 15
   done
-  until [ $MON != "" ]; do
+  until [ "$MON" != "" ]; do
       MON=$(docker ps -qf name=ceph_mon)
       echo "En espera del mon"
       sleep 10
@@ -27,7 +27,7 @@ function validarMontaje() {
         is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK) 2>/dev/null
         lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
         mgr=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
-        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 1 ] && [ $lines -ne 0 ]; then
+        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 0 ] && [ $lines -ne 0 ]; then
 	          mount -a
 	          if [ $? -eq 0 ]; then
 	              MONTADO=1
@@ -36,7 +36,7 @@ function validarMontaje() {
 	          fi
             if [ $MONTADO -eq 1 ]; then
                 COUNTER=$TRIES
-              else
+            else
                 MONTADO=0
             fi
 	      else
@@ -45,6 +45,30 @@ function validarMontaje() {
   done
 }
 
+function remakeCeph() {
+  CONTENEDORES=0
+  until [ $NODE -ge 3 ]; do
+    NODE=$(docker node ls | grep -c Ready)
+    echo "En espera de los demas nodos.."
+    sleep 15
+  done
+  CONTENEDORES=$(docker service ls | grep evaluador | awk '{ print $4 }' | grep -c 0)
+  if [ "$CONTENEDORES" -eq 0 ]; then
+     echo "Hay contenedores del sec activo asi no se puede reinicicar ceph"
+     exit 1
+  else
+     docker stack rm ceph
+     sleep 20
+     docker stack deploy ceph -c /home/tessec/clusterMaster/master_sec_swarm/ceph/docker-compose.yml ceph
+  fi
+
+}
+
+
+
+
+
+
 validarMontaje
 
 if [ $MONTADO -eq 1 ]; then
@@ -52,7 +76,7 @@ if [ $MONTADO -eq 1 ]; then
 	        exit 0
   else
           echo "paso por el else aun no montado"
-          for i in $(docker service ls -qf name=ceph_mon) ; do docker service update $i ; done
-          COUNTER=0
+          echo "Volviendo a regenerar Ceph"
+
           validarMontaje
 fi

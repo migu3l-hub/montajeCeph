@@ -1,27 +1,31 @@
-#!/bin/bash
-# EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
-# CUANDO FALLA TODOS LOS INTENTOS SOLO ESPERA UNOS SEGUNDOS Y LO VUELVE A INTENTAR
-
+#!/bin/bash -x
+#EL SCRIPT DEBE COMENZAR CUANDO AL MENOS 2 NODOS ESTAN ACTIVOS
 
 
 function validarMontaje() {
   MONTADO=0
   COUNTER=0
   NODE=0
-
+  MON=""
   #stop testing after N times
-  TRIES=30
-  until [ $NODE -ge 3 ]; do
-        NODE=$(docker node ls | grep -c Ready)
-        echo "En espera de los demas nodos.."
-        sleep 15
+  TRIES=20
+  until [ $NODE -ge 2 ]; do
+      NODE=$(docker node ls | grep -c Ready)
+      echo "En espera de los demas nodos.."
+      sleep 15
+  done
+  until [ "$MON" != "" ]; do
+      MON=$(docker ps -qf name=ceph_mon)
+      echo "En espera del mon"
+      sleep 10
   done
   until [  $COUNTER -eq "$TRIES" ]
     do
         let COUNTER=COUNTER+1
         is_OK=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c HEALTH_OK) 2>/dev/null
         lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
-        if [ $is_OK -eq 1 ] || [ $lines -lt 19 ]; then
+        mgr=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
+        if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 0 ] && [ $lines -ne 0 ]; then
 	          mount -a
 	          if [ $? -eq 0 ]; then
 	              MONTADO=1
@@ -30,7 +34,7 @@ function validarMontaje() {
 	          fi
             if [ $MONTADO -eq 1 ]; then
                 COUNTER=$TRIES
-              else
+            else
                 MONTADO=0
             fi
 	      else
@@ -39,6 +43,8 @@ function validarMontaje() {
   done
 }
 
+
+#Inicio
 validarMontaje
 
 if [ $MONTADO -eq 1 ]; then
@@ -46,7 +52,7 @@ if [ $MONTADO -eq 1 ]; then
 	        exit 0
   else
           echo "paso por el else aun no montado"
-          sleep 30
-          COUNTER=0
+          echo "Volviendo a intentar despues de unos momentos"
+          sleep 15
           validarMontaje
 fi

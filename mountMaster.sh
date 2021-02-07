@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
 #CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
 #Poner un ultimo if que pregunte si el mgr esta activo 3 veces por que inicia activo y luego se quita
@@ -55,7 +55,6 @@ function remakeCeph() {
   CONTENEDORES=$(docker service ls | grep evaluador | awk '{ print $4 }' | grep -c 0)
   if [ "$CONTENEDORES" -eq 0 ]; then
      echo "Hay contenedores del sec activo asi no se puede reinicicar ceph"
-     exit 1
   else
      docker stack rm ceph
      sleep 20
@@ -64,11 +63,7 @@ function remakeCeph() {
 
 }
 
-
-
-
-
-
+#Inicio
 validarMontaje
 
 if [ $MONTADO -eq 1 ]; then
@@ -77,6 +72,6 @@ if [ $MONTADO -eq 1 ]; then
   else
           echo "paso por el else aun no montado"
           echo "Volviendo a regenerar Ceph"
-
+          remakeCeph
           validarMontaje
 fi

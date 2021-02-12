@@ -48,6 +48,7 @@ function validarMontaje() {
 validarMontaje
 
 if [ $MONTADO -eq 1 ]; then
+          mount /mnt/ceph
           echo "montaje correcto"
 	        exit 0
   else

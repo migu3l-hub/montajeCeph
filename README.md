@@ -17,3 +17,9 @@ https://superuser.com/questions/278396/systemd-does-not-run-etc-rc-local
 https://unix.stackexchange.com/questions/308311/systemd-service-runs-without-exiting
 
 https://unix.stackexchange.com/questions/337860/service-in-arch-not-starting-on-pc-boot
+
+IMPORTANTE 
+
+se observó que el script mountMaster trabaja mejor cuando el servidor 
+que lo posee se enciende primero que los demas con una ventaja de unos 30 segundos 
+despues de ese tiempo se deberan encender los demas 

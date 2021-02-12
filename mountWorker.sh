@@ -3,12 +3,13 @@
 
 
 function validarMontaje() {
+  sleep 360
   MONTADO=0
   COUNTER=0
   NODE=0
   MON=""
   #stop testing after N times
-  TRIES=20
+  TRIES=18
   until [ $NODE -ge 2 ]; do
       NODE=$(docker node ls | grep -c Ready)
       echo "En espera de los demas nodos.."
@@ -19,6 +20,7 @@ function validarMontaje() {
       echo "En espera del mon"
       sleep 10
   done
+  sleep 200
   until [  $COUNTER -eq "$TRIES" ]
     do
         let COUNTER=COUNTER+1
@@ -48,7 +50,7 @@ function validarMontaje() {
 validarMontaje
 
 if [ $MONTADO -eq 1 ]; then
-          mount /mnt/ceph
+          cat /proc/mounts | grep ceph
           echo "montaje correcto"
 	        exit 0
   else

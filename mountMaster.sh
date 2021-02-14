@@ -5,13 +5,14 @@
 
 
 function validarMontaje() {
-  sleep 360
+  sleep 250
   MONTADO=0
   COUNTER=0
   NODE=0
   MON=""
+  MGR=1
   #stop testing after N times
-  TRIES=22
+  TRIES=10
   until [ $NODE -ge 2 ]; do
       NODE=$(docker node ls | grep -c Ready)
       echo "En espera de los demas nodos.."
@@ -22,7 +23,12 @@ function validarMontaje() {
       echo "En espera del mon"
       sleep 10
   done
-  sleep 200
+  sleep 180
+  until [  $MGR -eq 0 ]; do
+      MGR=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
+      echo "En espera del mgr"
+      sleep 15
+  done
   until [  $COUNTER -eq "$TRIES" ]
     do
         let COUNTER=COUNTER+1

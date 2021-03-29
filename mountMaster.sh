@@ -64,13 +64,10 @@ function remakeCeph() {
   if [ "$CONTENEDORES" -eq 0 ]; then
      echo "Hay contenedores del sec activo asi no se puede reinicicar ceph"
   else
-     docker stack rm ceph
-     sleep 10
-     docker stack rm ceph
-     sleep 15
-     docker stack deploy ceph -c /home/tessec/clusterMaster/master_sec_swarm/ceph/docker-compose.yml
+     for i in $(docker service ls -qf name="ceph") ; do
+         docker service update "$i" --force ;
+     done
   fi
-
 }
 
 #Inicio

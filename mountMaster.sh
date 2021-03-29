@@ -1,7 +1,8 @@
 #!/bin/bash -x
 #EL SCRIPT DEBE COMENZAR CUANDO YA LOS 3 NODOS ESTAN ACTIVOS
 #CUANDO FALLA TODOS LOS INTENTOS REINICIA TODOS LOS CONETENEDORES DE CEPH Y VUELVE A EMPEZAR
-#Poner un ultimo if que pregunte si el mgr esta activo 3 veces por que inicia activo y luego se quita
+#SI SE FALLAN TODOS LOS INTENTOS LO MAS SEGURO ESQUE OCURRIO UN PROBLEMA DE SINCRONIZACION CON LOS OSD
+#DE LOS OSD DEPENDEN LOS OTROS DEMONIOS DE CEPH DE MODO QUE SI SE FALLAN TODOS LOS INTENTOS SE DEBEN REINICIAR LOS OSD
 
 
 function validarMontaje() {
@@ -54,20 +55,14 @@ function validarMontaje() {
 }
 
 function remakeCeph() {
-  CONTENEDORES=0
   until [ $NODE -ge 3 ]; do
     NODE=$(docker node ls | grep -c Ready)
     echo "En espera de los demas nodos.."
     sleep 15
   done
-  CONTENEDORES=$(docker service ls | grep evaluador | awk '{ print $4 }' | grep -c 0)
-  if [ "$CONTENEDORES" -eq 0 ]; then
-     echo "Hay contenedores del sec activo asi no se puede reinicicar ceph"
-  else
-     for i in $(docker service ls -qf name="ceph") ; do
-         docker service update "$i" --force ;
-     done
-  fi
+  docker service update --force ceph_mds
+  sleep 10
+  docker service update --force ceph_osd
 }
 
 #Inicio

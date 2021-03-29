@@ -34,7 +34,7 @@ function validarMontaje() {
         lines=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | wc -l) 2>/dev/null
         mgr=$(docker exec -i "$(docker ps -qf name=ceph_mon)" ceph status | grep -c "no active mgr")
         if [ $is_OK -eq 1 ] || [ $lines -le 20 ] && [ $mgr -eq 0 ] && [ $lines -ne 0 ]; then
-	          mount -a
+	          mount /mnt/ceph
 	          if [ $? -eq 0 ]; then
 	              MONTADO=1
 	          else
